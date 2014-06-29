@@ -4,46 +4,38 @@
 
 (enable-console-print!)
 
-;; (def app-state (atom {:text "Jibba jibbow!"}))
-(def app-state (atom {:list ["Lion" "Zebra" "Buffalo" "Antelope"]}))
+(def app-state
+  (atom
+    {:contacts
+     [{:first "Ben" :last "Bitdiddle" :email "benb@mit.edu"}
+      {:first "Alyssa" :middle-initial "P" :last "Hacker" :email "aphacker@mit.edu"}
+      {:first "Eva" :middle "Lu" :last "Ator" :email "eval@mit.edu"}
+      {:first "Louis" :last "Reasoner" :email "prolog@mit.edu"}
+      {:first "Cy" :middle-initial "D" :last "Effect" :email "bugs@mit.edu"}
+      {:first "Lem" :middle-initial "E" :last "Tweakit" :email "morebugs@mit.edu"}]}))
 
-;; (om/root
-;;   (fn [app owner]
-;;     (dom/h1 nil (:text app)))
-;;   app-state
-;;   {:target (. js/document (getElementById "app0"))})
+(defn middle-name [{:keys [middle middle-initial]}]
+  (cond
+    middle (str " " middle)
+    middle-initial (str " " middle-initial ".")))
 
-;; (om/root
-;;   (fn [app owner]
-;;     (dom/h1 nil (:text app)))
-;;   app-state
-;;   {:target (. js/document (getElementById "app1"))})
+(defn display-name [{:keys [first last] :as contact}]
+  (str last ", " first (middle-name contact)))
 
-;; (om/root
-;;   (fn [app owner]
-;;     (apply dom/ul nil
-;;       (map (fn [text] (dom/li nil text)) (:list app))))
-;;   app-state
-;;   {:target (. js/document (getElementById "app0"))})
+(defn contact-view [contact owner]
+  (reify
+    om/IRender
+    (render [this]
+      (dom/li nil (display-name contact)))))
 
-;; (om/root
-;;   (fn [app owner]
-;;     (apply dom/ul #js {:className "animals"}
-;;       (map (fn [text] (dom/li nil text)) (:list app))))
-;;   app-state
-;;   {:target (. js/document (getElementById "app0"))})
+(defn contacts-view [app owner]
+  (reify
+    om/IRender
+    (render [this]
+      (dom/div nil
+        (dom/h2 nil "Contact list")
+        (apply dom/ul nil
+          (om/build-all contact-view (:contacts app)))))))
 
-
-(defn stripe [text bgc]
-  (let [st #js {:backgroundColor bgc}]
-    (dom/li #js {:style st} text)))
-
-(om/root
-  (fn [app owner]
-    (om/component
-      (apply dom/ul #js {:className "animals"}
-        (map stripe (:list app) (cycle ["#ff0" "#fff"])))))
-  app-state
-  {:target (. js/document (getElementById "app0"))})
-
-;; (swap! app-state assoc :text "Multiple roots!")
+(om/root contacts-view app-state
+  {:target (. js/document (getElementById "contacts"))})
